@@ -204,6 +204,13 @@ class Det3DDataPreprocessor(DetDataPreprocessor):
                 for batch_aug in self.batch_augments:
                     imgs, data_samples = batch_aug(imgs, data_samples)
             batch_inputs['imgs'] = imgs
+            
+        # Use for MMDeploy
+        if 'cam2img' in inputs:
+            batch_inputs['cam2img'] = inputs['cam2img'][0]
+
+        if 'cam2img_inverse' in inputs:
+            batch_inputs['cam2img_inverse'] = inputs['cam2img_inverse'][0]
 
         return {'inputs': batch_inputs, 'data_samples': data_samples}
 

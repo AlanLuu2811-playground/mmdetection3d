@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument(
         '--cam-type',
         type=str,
-        default='CAM_BACK',
+        default='CAM_FRONT',
         help='choose camera type to inference')
     parser.add_argument(
         '--pred-score-thr',

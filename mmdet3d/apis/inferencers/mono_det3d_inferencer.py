@@ -102,6 +102,10 @@ class MonoDet3DInferencer(Base3DInferencer):
             if not isinstance(inputs, (list, tuple)):
                 inputs = [inputs]
 
+            inputs = sorted(
+                inputs,
+                key=lambda x: int(x['img'].split('_')[-1].split('.')[0]))
+
             # get cam2img, lidar2cam and lidar2img from infos
             info_list = mmengine.load(infos)['data_list']
             assert len(info_list) == len(inputs)
@@ -122,7 +126,11 @@ class MonoDet3DInferencer(Base3DInferencer):
                         data_info['images'][cam_type]['lidar2img'],
                         dtype=np.float32)
                 else:
-                    lidar2img = cam2img @ lidar2cam
+                    #lidar2img = cam2img @ lidar2cam
+                    cam2ego = np.asarray(
+                        data_info['images'][cam_type]['cam2ego'], 
+                        dtype=np.float32)
+                    lidar2img = cam2ego @ lidar2cam
                 input['cam2img'] = cam2img
                 input['lidar2cam'] = lidar2cam
                 input['lidar2img'] = lidar2img

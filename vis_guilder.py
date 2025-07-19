@@ -1,0 +1,45 @@
+import mmcv
+import numpy as np
+from mmengine import load
+import os
+
+from mmdet3d.visualization import Det3DLocalVisualizer
+from mmdet3d.structures import CameraInstance3DBoxes 
+
+selected_cam = 'CAM_FRONT'
+guilder_dataset_path = '/home/alan_khang/Downloads/guilder_dataset'
+annot_path = os.path.join(guilder_dataset_path, 'guilder_infos_train.pkl')
+selected_index = 0
+
+info_file = load(annot_path) 
+cam2img = np.array(info_file['data_list'][selected_index]['images'][selected_cam]['cam2img'], dtype=np.float32)
+img_filename = info_file['data_list'][selected_index]['images'][selected_cam]['img_path']
+img_path = os.path.join(guilder_dataset_path, 'images', img_filename)
+bboxes_3d = []
+
+for instance in info_file['data_list'][selected_index]['cam_instances'][selected_cam]:
+    bboxes_3d.append(instance['bbox_3d'])
+gt_bboxes_3d = np.array(bboxes_3d, dtype=np.float32)
+
+gt_bboxes_3d = CameraInstance3DBoxes(
+    gt_bboxes_3d,
+    box_dim=gt_bboxes_3d.shape[-1],
+    origin=(0.5, 0.5, 0.5))
+
+print('-------------')
+print('filename: ', img_filename)
+print('instance: ', instance)
+print('gt_bboxes: ', gt_bboxes_3d)
+print('gravity_center', gt_bboxes_3d.gravity_center)
+print('yaw: ', gt_bboxes_3d.yaw)
+
+input_meta = {'cam2img': cam2img}
+
+visualizer = Det3DLocalVisualizer()
+
+img = mmcv.imread(img_path)
+img = mmcv.imconvert(img, 'bgr', 'rgb')
+visualizer.set_image(img)
+# project 3D bboxes to image
+visualizer.draw_proj_bboxes_3d(gt_bboxes_3d, input_meta)
+visualizer.show()

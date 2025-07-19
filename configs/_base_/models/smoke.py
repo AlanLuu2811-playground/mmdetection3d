@@ -57,5 +57,6 @@ model = dict(
         loss_attr=None,
         conv_bias=True,
         dcn_on_last_conv=False),
-    train_cfg=None,
+    train_cfg=dict(
+        code_weight=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.5]),
     test_cfg=dict(topK=100, local_maximum_kernel=3, max_per_img=100))

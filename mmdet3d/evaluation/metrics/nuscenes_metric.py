@@ -1,6 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import tempfile
 from os import path as osp
+import json
+import math
+import shutil
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import mmengine
@@ -65,17 +68,20 @@ class NuScenesMetric(BaseMetric):
         'vehicle.trailer': 'trailer',
         'vehicle.truck': 'truck'
     }
+    #DefaultAttribute = {
+    #    'car': 'vehicle.parked',
+    #    'pedestrian': 'pedestrian.moving',
+    #    'trailer': 'vehicle.parked',
+    #    'truck': 'vehicle.parked',
+    #    'bus': 'vehicle.moving',
+    #    'motorcycle': 'cycle.without_rider',
+    #    'construction_vehicle': 'vehicle.parked',
+    #    'bicycle': 'cycle.without_rider',
+    #    'barrier': '',
+    #    'traffic_cone': '',
+    #}
     DefaultAttribute = {
-        'car': 'vehicle.parked',
-        'pedestrian': 'pedestrian.moving',
-        'trailer': 'vehicle.parked',
-        'truck': 'vehicle.parked',
-        'bus': 'vehicle.moving',
-        'motorcycle': 'cycle.without_rider',
-        'construction_vehicle': 'vehicle.parked',
-        'bicycle': 'cycle.without_rider',
-        'barrier': '',
-        'traffic_cone': '',
+        'guilder': 'guilder',
     }
     # https://github.com/nutonomy/nuscenes-devkit/blob/57889ff20678577025326cfc24e57424a829be0a/python-sdk/nuscenes/eval/detection/evaluate.py#L222 # noqa
     ErrNameMapping = {
@@ -231,7 +237,7 @@ class NuScenesMetric(BaseMetric):
 
         output_dir = osp.join(*osp.split(result_path)[:-1])
         nusc = NuScenes(
-            version=self.version, dataroot=self.data_root, verbose=False)
+            version='', dataroot=self.data_root, verbose=False)
         eval_set_map = {
             'v1.0-mini': 'mini_val',
             'v1.0-trainval': 'val',
@@ -240,9 +246,10 @@ class NuScenesMetric(BaseMetric):
             nusc,
             config=self.eval_detection_configs,
             result_path=result_path,
-            eval_set=eval_set_map[self.version],
+            #eval_set=eval_set_map[self.version],
+            eval_set='adam_train',
             output_dir=output_dir,
-            verbose=False)
+            verbose=True)
         nusc_eval.main(render_curves=False)
 
         # record metrics
@@ -385,14 +392,14 @@ class NuScenesMetric(BaseMetric):
         # Camera types in Nuscenes datasets
         camera_types = [
             'CAM_FRONT',
-            'CAM_FRONT_RIGHT',
-            'CAM_FRONT_LEFT',
-            'CAM_BACK',
-            'CAM_BACK_LEFT',
-            'CAM_BACK_RIGHT',
+            #'CAM_FRONT_RIGHT',
+            #'CAM_FRONT_LEFT',
+            #'CAM_BACK',
+            #'CAM_BACK_LEFT',
+            #'CAM_BACK_RIGHT',
         ]
 
-        CAM_NUM = 6
+        CAM_NUM = len(camera_types)
 
         for i, det in enumerate(mmengine.track_iter_progress(results)):
 
@@ -578,11 +585,12 @@ def output_to_nusc_box(
     attrs = None
     if 'attr_labels' in detection:
         attrs = detection['attr_labels'].numpy()
+    else:
+        attrs = np.zeros_like(labels, dtype=np.int64)
 
     box_gravity_center = bbox3d.gravity_center.numpy()
-    box_dims = bbox3d.dims.numpy()
+    box_lhw = bbox3d.dims.numpy()
     box_yaw = bbox3d.yaw.numpy()
-
     box_list = []
 
     if isinstance(bbox3d, LiDARInstance3DBoxes):
@@ -606,14 +614,14 @@ def output_to_nusc_box(
     elif isinstance(bbox3d, CameraInstance3DBoxes):
         # our Camera coordinate system -> nuScenes box coordinate system
         # convert the dim/rot to nuscbox convention
-        nus_box_dims = box_dims[:, [2, 0, 1]]
-        nus_box_yaw = -box_yaw
+        nus_box_dims = box_lhw[:, [2, 0, 1]]  # lhw -> wlh
+        nus_box_yaw = np.pi / 2 + box_yaw
         for i in range(len(bbox3d)):
-            q1 = pyquaternion.Quaternion(
-                axis=[0, 0, 1], radians=nus_box_yaw[i])
-            q2 = pyquaternion.Quaternion(axis=[1, 0, 0], radians=np.pi / 2)
-            quat = q2 * q1
-            velocity = (bbox3d.tensor[i, 7], 0.0, bbox3d.tensor[i, 8])
+            quat = pyquaternion.Quaternion(
+                axis=[0, 1, 0], radians=nus_box_yaw[i]
+            )
+            #velocity = (bbox3d.tensor[i, 7], 0.0, bbox3d.tensor[i, 8])
+            velocity = (0.0, 0.0, 0.0)
             box = NuScenesBox(
                 box_gravity_center[i],
                 nus_box_dims[i],
@@ -769,13 +777,12 @@ def nusc_box_to_cam_box3d(
     """
     locs = torch.Tensor([b.center for b in boxes]).view(-1, 3)
     dims = torch.Tensor([b.wlh for b in boxes]).view(-1, 3)
-    rots = torch.Tensor([b.orientation.yaw_pitch_roll[0]
+    rots = torch.Tensor([b.orientation.yaw_pitch_roll[1]
                          for b in boxes]).view(-1, 1)
     velocity = torch.Tensor([b.velocity[0::2] for b in boxes]).view(-1, 2)
 
-    # convert nusbox to cambox convention
-    dims[:, [0, 1, 2]] = dims[:, [1, 2, 0]]
-    rots = -rots
+    dims[:, [0, 1, 2]] = dims[:, [1, 2, 0]]  # wlh -> lhw
+    rots = rots - (torch.pi / 2)
 
     boxes_3d = torch.cat([locs, dims, rots, velocity], dim=1).cuda()
     cam_boxes3d = CameraInstance3DBoxes(
