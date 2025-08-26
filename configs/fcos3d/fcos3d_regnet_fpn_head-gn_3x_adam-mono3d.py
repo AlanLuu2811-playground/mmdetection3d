@@ -11,32 +11,22 @@ model = dict(
         bgr_to_rgb=False,
         pad_size_divisor=32),
     backbone=dict(
-        dcn=dict(type='DCNv2', deform_groups=1, fallback_on_stride=False),
-        stage_with_dcn=(False, False, True, True)),
+        _delete_=True,
+        type='mmdet.RegNet',
+        arch='regnetx_4.0gf',
+        out_indices=(0, 1, 2, 3),
+        frozen_stages=1,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        norm_eval=True,
+        style='pytorch',
+        init_cfg=dict(
+            type='Pretrained', checkpoint='open-mmlab://regnetx_4.0gf')),
+    neck=dict(
+        in_channels=[80, 240, 560, 1360]),
     bbox_head=dict(
         num_classes=1))
-    #init_cfg=dict(
-    #    type='Pretrained',
-    #    checkpoint='/home/alan_khang/dev/mmdetection3d/work_dirs/fcos3d_r101_adam_omni/best_NuScenes metric_pred_instances_3d_NuScenes_guilder_AP_dist_0.5_epoch_3.pth'))
 
 backend_args = None
-
-albu_train_transforms = [
-    dict(
-        type='RandomBrightnessContrast',
-        brightness_limit=[-0.3, 0.3],
-        contrast_limit=[-0.3, 0.3],
-        brightness_by_max=True,
-        ensure_safe_range=True,
-        p=0.6),
-    dict(
-        type='MotionBlur',
-        blur_limit=[5, 8],
-        allow_shifted=False,
-        angle_range=[0, 0],
-        direction_range=[0, 0],
-        p=0.5),
-]
 
 train_pipeline = [
     dict(type='LoadImageFromFileMono3D', backend_args=backend_args),
@@ -49,13 +39,6 @@ train_pipeline = [
         with_label_3d=True,
         with_bbox_depth=True),
     dict(type='mmdet.Resize', scale=(640, 400), keep_ratio=True),
-    dict(
-        type='mmdet.Albu',
-        transforms=albu_train_transforms,
-        keymap={
-            'img': 'image',
-            'images': 'images_info'
-        }),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.),
     dict(
         type='Pack3DDetInputs',
@@ -78,7 +61,7 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 # optimizer
 optim_wrapper = dict(
     clip_grad=dict(max_norm=35, norm_type=2),
-    optimizer=dict(lr=1e-4, type='AdamW', weight_decay=0.01),
+    optimizer=dict(lr=0.0001, type='AdamW', weight_decay=0.01),
     type='OptimWrapper')
 
 # learning rate
@@ -101,4 +84,4 @@ param_scheduler = [
 train_cfg = dict(val_interval=1)
 
 default_hooks = dict(
-    checkpoint=dict(interval=2, max_keep_ckpts=1, save_best='NuScenes metric/pred_instances_3d_NuScenes/guilder_AP_dist_0.5', rule='greater'))
+    checkpoint=dict(interval=1, max_keep_ckpts=1, save_best='NuScenes metric/pred_instances_3d_NuScenes/guilder_AP_dist_0.5', rule='greater'))

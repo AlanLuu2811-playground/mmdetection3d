@@ -82,6 +82,7 @@ class NuScenesMetric(BaseMetric):
     #}
     DefaultAttribute = {
         'guilder': 'guilder',
+        'alcon_cart': 'alcon_cart',
     }
     # https://github.com/nutonomy/nuscenes-devkit/blob/57889ff20678577025326cfc24e57424a829be0a/python-sdk/nuscenes/eval/detection/evaluate.py#L222 # noqa
     ErrNameMapping = {
@@ -247,7 +248,7 @@ class NuScenesMetric(BaseMetric):
             config=self.eval_detection_configs,
             result_path=result_path,
             #eval_set=eval_set_map[self.version],
-            eval_set='adam_train',
+            eval_set='adam_eval',
             output_dir=output_dir,
             verbose=True)
         nusc_eval.main(render_curves=False)
@@ -618,7 +619,7 @@ def output_to_nusc_box(
         nus_box_yaw = np.pi / 2 + box_yaw
         for i in range(len(bbox3d)):
             quat = pyquaternion.Quaternion(
-                axis=[0, 1, 0], radians=nus_box_yaw[i]
+                axis=[0, 0, 1], radians=nus_box_yaw[i]
             )
             #velocity = (bbox3d.tensor[i, 7], 0.0, bbox3d.tensor[i, 8])
             velocity = (0.0, 0.0, 0.0)
@@ -777,7 +778,7 @@ def nusc_box_to_cam_box3d(
     """
     locs = torch.Tensor([b.center for b in boxes]).view(-1, 3)
     dims = torch.Tensor([b.wlh for b in boxes]).view(-1, 3)
-    rots = torch.Tensor([b.orientation.yaw_pitch_roll[1]
+    rots = torch.Tensor([b.orientation.yaw_pitch_roll[0]
                          for b in boxes]).view(-1, 1)
     velocity = torch.Tensor([b.velocity[0::2] for b in boxes]).view(-1, 2)
 

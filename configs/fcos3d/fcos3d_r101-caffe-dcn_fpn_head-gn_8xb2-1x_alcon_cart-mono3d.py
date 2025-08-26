@@ -2,6 +2,8 @@ _base_ = [
     '../_base_/datasets/adam-mono3d.py', '../_base_/models/fcos3d.py',
     '../_base_/schedules/schedule-3x.py', '../_base_/default_runtime.py'
 ]
+
+
 # model settings
 model = dict(
     data_preprocessor=dict(
@@ -15,9 +17,6 @@ model = dict(
         stage_with_dcn=(False, False, True, True)),
     bbox_head=dict(
         num_classes=1))
-    #init_cfg=dict(
-    #    type='Pretrained',
-    #    checkpoint='/home/alan_khang/dev/mmdetection3d/work_dirs/fcos3d_r101_adam_omni/best_NuScenes metric_pred_instances_3d_NuScenes_guilder_AP_dist_0.5_epoch_3.pth'))
 
 backend_args = None
 
@@ -101,4 +100,4 @@ param_scheduler = [
 train_cfg = dict(val_interval=1)
 
 default_hooks = dict(
-    checkpoint=dict(interval=2, max_keep_ckpts=1, save_best='NuScenes metric/pred_instances_3d_NuScenes/guilder_AP_dist_0.5', rule='greater'))
+    checkpoint=dict(interval=2, max_keep_ckpts=1, save_best='NuScenes metric/pred_instances_3d_NuScenes/alcon_cart_AP_dist_0.5', rule='greater'))
