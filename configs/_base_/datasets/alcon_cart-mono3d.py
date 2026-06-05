@@ -1,9 +1,7 @@
-dataset_type = 'NuScenesDataset'
-data_root = '/home/alan_khang/Desktop/adam_dataset'
-class_names = ['guilder',]
+dataset_type = 'AlconCartDataset'
 
-#data_root = '/home/alan_khang/Desktop/alcon_cart_dataset'
-#class_names = ['alcon_cart',]
+data_root = '/home/alan_khang/Desktop/alcon_cart_dataset'
+class_names = ['alcon_cart',]
 
 metainfo = dict(classes=class_names)
 # Input modality for nuScenes dataset, this is consistent with the submission
@@ -62,8 +60,7 @@ train_dataloader = dict(
         data_prefix=dict(
             pts='',
             CAM_FRONT=''),
-        ann_file='nuscenes_format/guilder_infos_train.pkl',  
-        #ann_file='nuscenes_format/alcon_cart_infos_train.pkl',  
+        ann_file='nuscenes_format/alcon_cart_infos_train.pkl',  
         load_type='mv_image_based',
         pipeline=train_pipeline,
         metainfo=metainfo,
@@ -86,8 +83,7 @@ val_dataloader = dict(
         data_prefix=dict(
             pts='',
             CAM_FRONT=''),
-        ann_file='nuscenes_format/guilder_infos_val.pkl',
-        #ann_file='nuscenes_format/alcon_cart_infos_val.pkl',
+        ann_file='nuscenes_format/alcon_cart_infos_val.pkl',
         load_type='mv_image_based',
         pipeline=test_pipeline,
         modality=input_modality,
@@ -101,8 +97,7 @@ test_dataloader = val_dataloader
 val_evaluator = dict(
     type='NuScenesMetric',
     data_root=data_root,
-    ann_file=data_root + '/nuscenes_format/guilder_infos_val.pkl', 
-    #ann_file=data_root + '/nuscenes_format/alcon_cart_infos_val.pkl', 
+    ann_file=data_root + '/nuscenes_format/alcon_cart_infos_val.pkl', 
     metric='bbox',
     backend_args=backend_args)
 

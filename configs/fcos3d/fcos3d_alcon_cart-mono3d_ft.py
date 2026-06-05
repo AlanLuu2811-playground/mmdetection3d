@@ -13,10 +13,14 @@ model = dict(
         bgr_to_rgb=False,
         pad_size_divisor=32),
     backbone=dict(
+        frozen_stages=3,
         dcn=dict(type='DCNv2', deform_groups=1, fallback_on_stride=False),
         stage_with_dcn=(False, False, True, True)),
     bbox_head=dict(
-        num_classes=1))
+        num_classes=1),
+    init_cfg=dict(
+        type='Pretrained',
+        checkpoint='./work_dirs/fcos3d_r101_adam_alcon_cart_25_11_14/best_NuScenes metric_pred_instances_3d_NuScenes_NDS_epoch_10.pth'))
 
 backend_args = None
 
@@ -77,7 +81,7 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 # optimizer
 optim_wrapper = dict(
     clip_grad=dict(max_norm=35, norm_type=2),
-    optimizer=dict(lr=1e-4, type='AdamW', weight_decay=0.01),
+    optimizer=dict(lr=5e-5, type='AdamW', weight_decay=0.01),
     type='OptimWrapper')
 
 # learning rate

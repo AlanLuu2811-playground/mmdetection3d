@@ -11,12 +11,12 @@ from .det3d_dataset import Det3DDataset
 
 
 @DATASETS.register_module()
-class NuScenesDataset(Det3DDataset):
-    r"""NuScenes Dataset.
+class AlconCartDataset(Det3DDataset):
+    r"""Alcon Cart Dataset based on NuScenes Dataset.
 
-    This class serves as the API for experiments on the NuScenes Dataset.
+    This class serves as the API for experiments on the Alcon Cart Dataset.
 
-    Please refer to `NuScenes Dataset <https://www.nuscenes.org/download>`_
+    Please refer to `Alcon Cart Dataset <https://www.nuscenes.org/download>`_
     for data downloading.
 
     Args:
@@ -56,11 +56,7 @@ class NuScenesDataset(Det3DDataset):
             Defaults to False.
     """
     METAINFO = {
-        'classes':
-            #('car', 'truck', 'trailer', 'bus', 'construction_vehicle', 'bicycle',
-            # 'motorcycle', 'pedestrian', 'traffic_cone', 'barrier'),
-        ('guilder',),
-        #('alcon_cart',),
+        'classes': ('alcon_cart',),
         'version':
         'v1.0-mini',
         'palette': [

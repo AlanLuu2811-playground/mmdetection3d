@@ -14,10 +14,10 @@ model = dict(
         dcn=dict(type='DCNv2', deform_groups=1, fallback_on_stride=False),
         stage_with_dcn=(False, False, True, True)),
     bbox_head=dict(
-        num_classes=1))
-    #init_cfg=dict(
-    #    type='Pretrained',
-    #    checkpoint='/home/alan_khang/dev/mmdetection3d/work_dirs/fcos3d_r101_adam_omni/best_NuScenes metric_pred_instances_3d_NuScenes_guilder_AP_dist_0.5_epoch_3.pth'))
+        num_classes=1),
+    init_cfg=dict(
+        type='Pretrained',
+        checkpoint='/home/alan_khang/dev/mmdetection3d/work_dirs/fcos3d_r101_adam_guilder_syn_and_real_eai_office_bg_25_09_15/best_NuScenes metric_pred_instances_3d_NuScenes_NDS_epoch_35.pth'))
 
 backend_args = None
 
@@ -78,7 +78,7 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 # optimizer
 optim_wrapper = dict(
     clip_grad=dict(max_norm=35, norm_type=2),
-    optimizer=dict(lr=1e-4, type='AdamW', weight_decay=0.01),
+    optimizer=dict(lr=5e-5, type='AdamW', weight_decay=0.01),
     type='OptimWrapper')
 
 # learning rate
@@ -101,4 +101,4 @@ param_scheduler = [
 train_cfg = dict(val_interval=1)
 
 default_hooks = dict(
-    checkpoint=dict(interval=2, max_keep_ckpts=1, save_best='NuScenes metric/pred_instances_3d_NuScenes/guilder_AP_dist_0.5', rule='greater'))
+    checkpoint=dict(interval=2, max_keep_ckpts=1, save_best='NuScenes metric/pred_instances_3d_NuScenes/NDS', rule='greater'))

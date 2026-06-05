@@ -243,12 +243,17 @@ class NuScenesMetric(BaseMetric):
             'v1.0-mini': 'mini_val',
             'v1.0-trainval': 'val',
         }
+
+        class_name = self.dataset_meta['classes'][0]  # Assuming single class
+        assert class_name in ['guilder', 'alcon_cart'], f'Unsupported class {class_name} for NuScenes evaluation.'
+        eval_set = f'{class_name}_eval'
+
         nusc_eval = NuScenesEval(
             nusc,
             config=self.eval_detection_configs,
             result_path=result_path,
             #eval_set=eval_set_map[self.version],
-            eval_set='adam_eval',
+            eval_set=eval_set,
             output_dir=output_dir,
             verbose=True)
         nusc_eval.main(render_curves=False)
@@ -594,6 +599,8 @@ def output_to_nusc_box(
     box_yaw = bbox3d.yaw.numpy()
     box_list = []
 
+    #box_gravity_center[:, 1] -= box_lhw[:, 1] / 2  # guilder baselink y-axis is at the bottom => move to center
+
     if isinstance(bbox3d, LiDARInstance3DBoxes):
         # our LiDAR coordinate system -> nuScenes box coordinate system
         nus_box_dims = box_dims[:, [1, 0, 2]]
@@ -783,6 +790,7 @@ def nusc_box_to_cam_box3d(
     velocity = torch.Tensor([b.velocity[0::2] for b in boxes]).view(-1, 2)
 
     dims[:, [0, 1, 2]] = dims[:, [1, 2, 0]]  # wlh -> lhw
+    #locs[:, 1] += dims[:, 1] / 2  # guilder baselink y-axis is at the center (NuScenes format) => move back to bottom
     rots = rots - (torch.pi / 2)
 
     boxes_3d = torch.cat([locs, dims, rots, velocity], dim=1).cuda()
